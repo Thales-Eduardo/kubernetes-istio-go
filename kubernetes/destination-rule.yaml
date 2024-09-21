@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: api-test-destination-rule
+  namespace: api-test-namespace-dev
+spec:
+  host: api-test-service
+  trafficPolicy:
+    outlierDetection:
+      #consecutive5xxErrors: 10
+      consecutiveGatewayErrors: 6
+      interval: 20s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+    loadBalancer:
+      simple: ROUND_ROBIN

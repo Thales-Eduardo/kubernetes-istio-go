@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: api-test-vs
+  namespace: api-test-namespace-dev
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - ingress-gateway-k3s
+  http:
+    - route:
+        - destination:
+            host: api-test-service
