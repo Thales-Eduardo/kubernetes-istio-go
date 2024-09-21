@@ -64,7 +64,13 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/releas
 kubectl get pods -n istio-system
 istioctl dashboard kiali 
 
+
+kubectl apply -f statefulset.yaml && kubectl apply -f postgresql-service-h.yaml
+
 curl http://api-test-service:8000
 curl http://localhost:8000
-kubectl logs api-test-7569468b56-dcsnm -c api-test -n api-test-namespace-dev
+kubectl logs postgresql-0 -n api-test-namespace-dev
 kubectl get endpoints api-test-service
+kubectl exec -it api-test-d8c4b859b-564dg -n api-test-namespace-dev -- bash
+kubectl exec -it postgresql-0 -n api-test-namespace-dev -- psql -U postgres
+kubectl edit deployment api-test -n api-test-namespace-dev
