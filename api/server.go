@@ -80,17 +80,24 @@ var startedAt = time.Now()
 
 func main() {
 	connStr := "postgres://myuser:mypassword@postgresql-h.api-test-namespace-dev.svc.cluster.local:5432/api-test?sslmode=disable&connect_timeout=10"
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+	maxAttempts := 5
+	var db *sql.DB
+	var err error
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("Erro ao conectar ao PostgreSQL:", err)
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		db, err = sql.Open("postgres", connStr)
+		if err != nil {
+			log.Printf("Tentativa %d: erro ao abrir a conexão: %v", attempt, err)
+		}
+
+		if err == nil {
+			// Se a conexão foi bem-sucedida, interrompe o loop
+			fmt.Println("Conexão estabelecida com sucesso!")
+			break
+		}
+
+		log.Printf("Tentativa %d: erro ao conectar ao PostgreSQL: %v", attempt, err)
 	}
-	fmt.Println("Conexão estabelecida com sucesso!")
 
 	http.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
 		users, err := ListUsers(db)
@@ -121,7 +128,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 func Healthz(w http.ResponseWriter, r *http.Request) {
 	duration := time.Since(startedAt)
 
-	if duration.Seconds() < 10 {
+	if duration.Seconds() < 12 {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf("Duration: %v", duration.Seconds())))
 	} else {

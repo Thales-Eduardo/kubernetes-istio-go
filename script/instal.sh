@@ -4,10 +4,11 @@ cd api && docker build -t thaleseduardo/teste-go . && \
 # para testar
 docker run --rm -p 3000:3000 thaleseduardo/teste-go
 
-k3d cluster create -p "8000:30000@loadbalancer" --agents 2
-kubectl get nodes
+# depois de instalar o k3d no seu sistema operacional
+# criar cluster e abrir a porta 8000 para acesso externo
+k3d cluster create -p "8000:30000@loadbalancer" --agents 2 && kubectl get nodes
 
-# depois de instalar o istio no seu sistema operacional
+# depois de instalar o istio e istioctl no seu sistema operacional
 # Instalando istio no cluster
 istioctl install
 kubectl get namespace
@@ -17,15 +18,18 @@ kubectl get pods -n istio-system
 # criar namespace
 kubectl create namespace api-test-namespace-dev
 kubectl get namespace
-kubectl get pods -n api-test-namespace-dev
-kubectl get services -n api-test-namespace-dev 
 
 # aplicar a label do istio no namespaces
 kubectl label namespace api-test-namespace-dev istio-injection=enabled
 
 cd kubernetes && kubectl apply -f deployments.yaml && \
  kubectl apply -f server-service.yaml && kubectl apply -f virtual-service.yaml && \ 
- kubectl apply -f destination-rule.yaml && kubectl apply -f gateway.yaml 
+ kubectl apply -f destination-rule.yaml && kubectl apply -f gateway.yaml && \
+ kubectl apply -f statefulset.yaml && kubectl apply -f postgresql-service-h.yaml
+
+# ou
+
+kubectl apply -f .
 
 # configurar gateway em localhost
 # coloque a porta para 30000 no nodePort http2
@@ -34,8 +38,6 @@ kubectl edit service istio-ingressgateway -n istio-system
 kubectl get service -n istio-system
 kubectl apply -f gateway.yaml
 # localhost:8000
-
-kubectl logs api-test-cb7599c7-mhsd9 -c api-test -n api-test-namespace-dev
 
 # metrics-server
 wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -60,12 +62,15 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/releas
  kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/release-1.23/samples/addons/kiali.yaml && \
  kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/release-1.23/samples/addons/jaeger.yaml && \
  kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/release-1.23/samples/addons/prometheus.yaml
- 
+
+# verificar os pods de kiali, grafana, jaeger e prometheus
 kubectl get pods -n istio-system
+
+# iniciar kiali
 istioctl dashboard kiali 
 
-
-kubectl apply -f statefulset.yaml && kubectl apply -f postgresql-service-h.yaml
+# verificações
+kubectl get pvc -n api-test-namespace-dev
 
 curl http://api-test-service:8000
 curl http://localhost:8000
@@ -74,3 +79,10 @@ kubectl get endpoints api-test-service
 kubectl exec -it api-test-d8c4b859b-564dg -n api-test-namespace-dev -- bash
 kubectl exec -it postgresql-0 -n api-test-namespace-dev -- psql -U postgres
 kubectl edit deployment api-test -n api-test-namespace-dev
+kubectl logs api-test-d8c4b859b-5vnmt  -c api-test -n api-test-namespace-dev
+
+kubectl get pods -n api-test-namespace-dev
+kubectl get services -n api-test-namespace-dev 
+
+kubectl exec -it api-test-5b8fb8c49f-fbgxh -n api-test-namespace-dev -- bash
+kubectl get endpoints postgresql-h -n api-test-namespace-dev   

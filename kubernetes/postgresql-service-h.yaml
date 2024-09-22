@@ -9,3 +9,5 @@ spec:
       targetPort: 5432
       protocol: TCP
   clusterIP: None
+  selector:
+    app: postgresql
