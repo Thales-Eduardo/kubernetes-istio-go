@@ -5,7 +5,7 @@ metadata:
   namespace: api-test-namespace-dev
 spec:
   serviceName: postgresql-h # headless service
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       app: postgresql
